@@ -131,6 +131,3 @@ Returns the results of the completed tasks from the output queue.
 
 `end_shift() -> None`  
 Ends the shift and waits for all tasks to complete.
-
-`flush_queue() -> None`  
-Flushes(emptying) input queue.
