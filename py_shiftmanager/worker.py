@@ -6,14 +6,17 @@ from typing import *
 
 from .logger import Logger
 
-
 class PoisonPill:
     """ This is used to kill worker process when end_shift() is called. """
     pass
 
 
 logger = Logger()
-lock = threading.Lock()
+""" using thread locks to make queue interaction thread safe. 1 for in 1 for out. """
+lock1 = threading.Lock()
+lock2 = threading.Lock()
+lock3 = threading.Lock()
+lock4 = threading.Lock()
 
 
 class Worker_IO:
@@ -28,32 +31,37 @@ class Worker_IO:
 
     def __repr__(self):
         return f"Worker;role={self.role};is_working={self.is_working};is_hired={self.is_hired}"
-
+    
     def work(self, qu_in: queue.Queue, qu_out: multiprocessing.Queue) -> NoReturn:
         self.is_hired = True
         while self.is_hired:
             try:
-                lock.acquire()
+                lock1.acquire()
                 task = qu_in.get(timeout=0.1)
             except queue.Empty:
-                lock.release()
+                lock1.release()
                 continue
             else:
+                lock1.release()
                 if task is None:
                     qu_in.task_done()
-                    lock.release()
                     self.is_hired = False
                     break
                 self.is_working = True
                 func = dill.loads(task['func'])
                 args = task['args']
-                result = func(*args)
+                # insert timeout func here <<<<
                 try:
+                    result = func(*args)
+                except Exception as err:
+                    result = {"error": err, "task": func.__name__, "args": args}
+                qu_in.task_done()
+                try:
+                    lock2.acquire()
                     qu_out.put(result)
                 except queue.Full:
                     logger.logger.error("OUTPUT-QUEUE IS FULL.")
-                qu_in.task_done()
-                lock.release()
+                lock2.release()
                 self.is_working = False
 
 
@@ -69,22 +77,27 @@ class Worker_COM(Worker_IO):
         self.is_hired = True
         while self.is_hired:
             try:
+                lock3.acquire()
                 task = qu_in.get(timeout=0.1)
             except queue.Empty:
+                lock3.release()
                 continue
             else:
+                lock3.release()
                 if isinstance(task, PoisonPill):
                     self.is_hired = False
                     qu_in.task_done()
-                    # qu_in.put(task)  # Put the PoisonPill back into the queue for other workers to receive
                     break
                 self.is_working = True
                 func = dill.loads(task['func'])
                 args = task['args']
+                # insert timeout func here <<<<
                 result = func(*args)
                 qu_in.task_done()
                 try:
+                    lock4.acquire()
                     qu_out.put(result)
                 except queue.Full:
                     logger.logger.error("OUTPUT-QUEUE IS FULL.")
+                lock4.release()
                 self.is_working = False

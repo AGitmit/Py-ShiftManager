@@ -22,7 +22,7 @@ logger = Logger()
 class ShiftManager_Compute(ShiftManager_IO):
     pool: multiprocessing.Pool
 
-    def __init__(self, num_of_workers: int = 1, daemon: bool = False, queue_size: int = 10) -> NoReturn:
+    def __init__(self, num_of_workers: int = multiprocessing.cpu_count(), daemon: bool = False, queue_size: int = 10) -> NoReturn:
         super().__init__(num_of_workers, daemon)
         self._q_in = multiprocessing.JoinableQueue(maxsize=queue_size)
         self._q_out = multiprocessing.Queue(maxsize=int(queue_size * 1.5))

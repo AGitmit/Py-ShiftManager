@@ -28,7 +28,7 @@ class ShiftManager_IO:
     _q_in: queue.Queue
     _q_out: multiprocessing.Queue
 
-    def __init__(self, num_of_workers: int = 1, daemon: bool = False, queue_size: int = 10) -> NoReturn:
+    def __init__(self, num_of_workers: int = 2, daemon: bool = False, queue_size: int = 10) -> NoReturn:
         self._num_of_workers = num_of_workers
         self.daemon = daemon
         self.queue_size = queue_size
@@ -58,7 +58,8 @@ class ShiftManager_IO:
     def new_task(self, func: Callable, *args) -> NoReturn:
         new_task = {"arrival_time": int(datetime.datetime.now().timestamp()), "func": dill.dumps(func), "args": args}
         try:
-            self._q_in.put(new_task)
+            with self._lock:
+                self._q_in.put(new_task)
         except QueueFullError:
             logger.logger.warn("INPUT-QUEUE IS FULL.")
 
@@ -91,8 +92,9 @@ class ShiftManager_IO:
     def get_results(self) -> List:
         # self._q_in.join()
         results = []
-        while not self._q_out.empty():
-            results.append(self._q_out.get())
+        with self._lock:
+            while not self._q_out.empty():
+                results.append(self._q_out.get())
         return results
 
     def join_all_workers(self) -> NoReturn:
@@ -101,9 +103,9 @@ class ShiftManager_IO:
 
     def end_shift(self) -> NoReturn:
         self._q_in.join()
-        # self.flush_queue()
-        for _ in range(self._num_of_workers):
-            self._q_in.put(None)
+        with self._lock:
+            for _ in range(self._num_of_workers):
+                self._q_in.put(None)
         self.join_all_workers()
         self.workers.clear()
         self.flush_queue()
@@ -122,7 +124,8 @@ class ShiftManager_IO:
     #             self._q_in.put(temp_queue.get())
 
     def flush_queue(self) -> NoReturn:
-        self._q_in.queue.clear()
+        with self._lock:
+            self._q_in.queue.clear()
 
     def autoscale(self, arrival_rate: float, avg_queue_time: float, avg_service_time: float) -> NoReturn:
         """
