@@ -37,9 +37,10 @@ class Worker_IO:
         while self.is_hired:
             try:
                 lock1.acquire()
-                task = qu_in.get(timeout=0.1)
+                task = qu_in.get()
             except queue.Empty:
-                lock1.release()
+                if lock1.locked():
+                    lock1.release()
                 continue
             else:
                 lock1.release()
@@ -50,7 +51,6 @@ class Worker_IO:
                 self.is_working = True
                 func = dill.loads(task['func'])
                 args = task['args']
-                # insert timeout func here <<<<
                 try:
                     result = func(*args)
                 except Exception as err:
@@ -61,8 +61,10 @@ class Worker_IO:
                     qu_out.put(result)
                 except queue.Full:
                     logger.logger.error("OUTPUT-QUEUE IS FULL.")
-                lock2.release()
-                self.is_working = False
+                finally:
+                    if lock2.locked():
+                        lock2.release()
+                    self.is_working = False
 
 
 class Worker_COM(Worker_IO):
@@ -80,7 +82,8 @@ class Worker_COM(Worker_IO):
                 lock3.acquire()
                 task = qu_in.get(timeout=0.1)
             except queue.Empty:
-                lock3.release()
+                if lock3.locked():
+                    lock3.release()
                 continue
             else:
                 lock3.release()
@@ -99,5 +102,7 @@ class Worker_COM(Worker_IO):
                     qu_out.put(result)
                 except queue.Full:
                     logger.logger.error("OUTPUT-QUEUE IS FULL.")
-                lock4.release()
+                finally:
+                    if lock4.locked():
+                        lock4.release()
                 self.is_working = False
