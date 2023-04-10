@@ -15,7 +15,7 @@ This small update is dedicaded to my friend Ram :).
 * *ShiftManager_IO* now initializes the number of workers to 2, instead of 1, by default.  
 
 ## Usage
-Here's an example of how to use Py-ShiftManager to handle IO tasks:
+Here's an example of how to use Py-ShiftManager to handle IO tasks:  
 `from py-shiftmanager import ShiftManager_IO`.  
 Now, lets also import *timeout_timer* wrapper:  
 `from py-shiftmanager.timeout import timeout_timer`
@@ -47,7 +47,7 @@ Or we can submit a batch by passing a list of tuples:
 # Handle the tasks
 `manager.handle_work()`  
 *ShiftManager* spins up the workers and starts consuming tasks from the input queue.  
-Since we applied the *timeout_timer* decorator, if a task takes longer than 3 seconds - it will be terminated.  
+Since we applied the *timeout_timer* decorator, if a task takes longer than 3 seconds - it will be terminated, but you'll still recieve a result with the task details, and that it has ran out of time.  
 
 # Wait for the tasks to complete
 `manager.end_shift()`  
@@ -147,6 +147,7 @@ Returns the results of the completed tasks from the output queue.
 `end_shift() -> None`  
 Ends the shift and waits for all tasks to complete.  
 
-**timeout_timer**
+**timeout_timer**  
+
 `@timeout_timer(seconds: int = 5)`  
-A decorator that attaches a timeout counter to your methods, use it to set a time limit to tasks.
+A decorator that attaches a timeout counter to your methods, use it to set a time limit to tasks in seconds; 5 seconds by default.
