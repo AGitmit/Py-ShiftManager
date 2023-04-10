@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 from pathlib import Path
 
-long_description = Path('Readm.md').read_text()
+long_description = Path('Readme.md').read_text()
 
 setup(
     name='py_shiftmanager',
