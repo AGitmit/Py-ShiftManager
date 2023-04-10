@@ -1,5 +1,5 @@
 # Py-ShiftManager
-#### v1.0
+#### v0.1.0
 
 Py-ShiftManager is a Python module that provides a managed queue environment for handling IO and computational tasks, allowing you to easily manage concurrency and multiprocessing without worrying about the details.
 
