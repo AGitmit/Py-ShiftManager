@@ -8,7 +8,7 @@ You can install Py-ShiftManager using pip:
 `pip install py-shiftmanager`
 
 ## What's new in v0.1.1
-This small update is dedicaded to my friend Ram :).
+This small update is dedicated to my friend Ram Manor :).
 * Introducing new timeout wrapper: *timeout_timer* - import it, decorate your functions, set amount of seconds, get a result for a task that has timed out without blocking your flow. 
 * Better thread locking system to ensure even smaller chances of getting in a deadlock situation.  
 * *ShiftManager_Compute* now initializes the number of workers with the number of CPU's available in the system, by default.  
@@ -28,10 +28,10 @@ Now, lets also import *timeout_timer* wrapper:
 * daemon = `False`
 * queue size = `10`    
 
-Also, by default the output queue is sent to 1.5 times the input queue size.
+Also, by default the output queue is set to 1.5 times the input queue size.
   
 # Add some tasks to the input queue
-Assume we have created a function and applied the *timeout_timer* decorator, incase a task takes longer than 3 seconds to complete, like so:  
+Assume we have created a function and applied the *timeout_timer* decorator, with a 3 seconds timeout counter, in case a task takes longer than 3 seconds to complete, like so:  
 `import requests`  
 `@timeout_timer(seconds=3)`  
 `def get_status(url):`  
@@ -42,7 +42,9 @@ We can assign single tasks to the queue:
 `manager.new_task(get_status, "http://www.twitter.com")`   
 Or we can submit a batch by passing a list of tuples:  
 `tasks = [(get_status, "http://www.google.com"),(get_status, "http://www.facebook.com")]`  
-`manager.new_batch(tasks)`
+`manager.new_batch(tasks)`  
+  
+**Note**: you can also pass *lambda* functions.
 
 # Handle the tasks
 `manager.handle_work()`  
@@ -148,6 +150,5 @@ Returns the results of the completed tasks from the output queue.
 Ends the shift and waits for all tasks to complete.  
 
 **timeout_timer**  
-
 `@timeout_timer(seconds: int = 5)`  
 A decorator that attaches a timeout counter to your methods, use it to set a time limit to tasks in seconds; 5 seconds by default.
