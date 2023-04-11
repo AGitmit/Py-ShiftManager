@@ -8,7 +8,6 @@ from typing import *
 from .worker import Worker_IO
 from .exceptions import QueueFullError
 from .logger import Logger
-from .shiftmanager_io import ShiftManager_IO
 
 """
 ShiftManager_IO:
@@ -39,7 +38,7 @@ class ShiftManager_IO:
         self.workers = []
         self._lock = threading.Lock()
         
-    def __enter__(self, num_of_workers: int = 2, daemon: bool = False, queue_size: int = 10) -> ShiftManager_IO:
+    def __enter__(self, num_of_workers: int = 2, daemon: bool = False, queue_size: int = 10):
         self.manager = ShiftManager_IO(num_of_workers, daemon, queue_size)
         return self.manager
     
