@@ -4,6 +4,7 @@ from typing import *
 from .worker import Worker_COM, PoisonPill
 from .shiftmanager_io import ShiftManager_IO
 from .logger import Logger
+from .shiftmanager_compute import ShiftManager_Compute
 
 """
 ShiftManager_Compute:
@@ -30,7 +31,7 @@ class ShiftManager_Compute(ShiftManager_IO):
         self.workers = []
         self._lock = multiprocessing.Lock()
         
-    def __enter__(self, num_of_workers: int = multiprocessing.cpu_count(), daemon: bool = False, queue_size: int = 10) -> object:
+    def __enter__(self, num_of_workers: int = multiprocessing.cpu_count(), daemon: bool = False, queue_size: int = 10) -> ShiftManager_Compute:
         self.manager = ShiftManager_Compute(num_of_workers, daemon, queue_size)
         return self.manager
     
