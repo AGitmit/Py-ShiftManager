@@ -37,6 +37,16 @@ class ShiftManager_IO:
         self.worker = Worker_IO()
         self.workers = []
         self._lock = threading.Lock()
+        
+    def __enter__(self, num_of_workers: int = 2, daemon: bool = False, queue_size: int = 10) -> object:
+        self.manager = ShiftManager_IO(num_of_workers, daemon, queue_size)
+        return self.manager
+    
+    def __exit__(self, exc_type, exc_val, exc_tb) -> NoReturn:
+        if exc_type is not None:
+            logger.logger.error(f"An exception of type {exc_type} occurred: {exc_val}")
+        self.manager.handle_work()
+        self.manager.end_shift()
 
     def __repr__(self):
         return f"""ShiftManagerIO;daemonized={self.daemon};workers={self._num_of_workers}"""

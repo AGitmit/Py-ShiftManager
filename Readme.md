@@ -1,5 +1,5 @@
 # Py-ShiftManager
-#### v0.1.1
+#### v0.1.2
 
 Py-ShiftManager is a Python module that provides a managed queue environment for handling IO and computational tasks, allowing you to easily manage concurrency and multiprocessing without worrying about the details.
 
@@ -13,6 +13,14 @@ This small update is dedicated to my friend Ram Manor :).
 * Better thread locking system to ensure even smaller chances of getting in a deadlock situation.  
 * *ShiftManager_Compute* now initializes the number of workers with the number of CPU's available in the system, by default.  
 * *ShiftManager_IO* now initializes the number of workers to 2, instead of 1, by default.  
+### New for v0.1.2
+* New context manager for *ShiftManager* - use the `with` keyword and get all the benefits of *ShiftManager* for a specific set of tasks, for even less lines of code!    
+`with ShiftManager_Compute() as manager:`  
+`   manager.new_task(lambda x: x**2, 4)`  
+`   manager.new_task(lambda x: x**4, 13)`  
+then get the results:  
+`results = manager.get_results()`  
+It's that simple.  
 
 ## Usage
 Here's an example of how to use Py-ShiftManager to handle IO tasks:  

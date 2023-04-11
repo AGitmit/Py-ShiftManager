@@ -29,6 +29,16 @@ class ShiftManager_Compute(ShiftManager_IO):
         self.worker = Worker_COM()
         self.workers = []
         self._lock = multiprocessing.Lock()
+        
+    def __enter__(self, num_of_workers: int = multiprocessing.cpu_count(), daemon: bool = False, queue_size: int = 10) -> object:
+        self.manager = ShiftManager_Compute(num_of_workers, daemon, queue_size)
+        return self.manager
+    
+    def __exit__(self, exc_type, exc_val, exc_tb) -> NoReturn:
+        if exc_type is not None:
+            logger.logger.error(f"An exception of type {exc_type} occurred: {exc_val}")
+        self.manager.handle_work()
+        self.manager.end_shift()
 
     def __repr__(self):
         return f"""ShiftManagerCOM;daemonized={self.daemon};workers={self._num_of_workers}"""
