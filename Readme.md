@@ -32,9 +32,9 @@ It's that simple.
 
 ## Usage
 Here's an example of how to use Py-ShiftManager to handle IO tasks:  
-`from py-shiftmanager import ShiftManager_IO`.  
+`from py_shiftmanager import ShiftManager_IO`.  
 Now, lets also import *timeout_timer* wrapper:  
-`from py-shiftmanager.timeout import timeout_timer`
+`from py_shiftmanager.timeout import timeout_timer`
 
 # Create a new ShiftManager instance with 4 workers
 `manager = ShiftManager_IO(num_of_workers=4)`  
@@ -76,7 +76,7 @@ This method sends a shut-down signal to all workers and waits for them to shut-d
 
 And here's an example of how to use Py-ShiftManager to handle computational tasks:
 
-`from py-shiftmanager import ShiftManager_Compute`  
+`from py_shiftmanager import ShiftManager_Compute`  
 
 # Create a new ShiftManager instance with 4 workers
 `manager = ShiftManager_Compute(num_of_workers=4)`  
