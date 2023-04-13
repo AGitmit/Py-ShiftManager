@@ -81,13 +81,14 @@ class ShiftManager_IO:
             self.__daemon = kwargs['daemon']
 
     """ Task and queue management """
-    def new_task(self, func: Callable, *args, force: bool = False) -> NoReturn:
-        new_task = {"arrival_time": int(datetime.datetime.now().timestamp()), "func": dill.dumps(func), "args": args}
+    def new_task(self, func: Callable, *args, force: bool = False, **kwargs) -> NoReturn:
+        new_task = {"arrival_time": int(datetime.datetime.now().timestamp()), "func": dill.dumps(func), "args": args, "kwargs": kwargs}
         self.__submit_task(new_task, force)
 
-    def new_batch(self, tasks: List[tuple], force: bool = False) -> NoReturn:
+    def new_batch(self, tasks: List[Tuple[Callable, Tuple, Dict[str, Any]]], force: bool = False) -> NoReturn:
         for task in tasks:
-            self.new_task(*task, force=force)
+            func, args, kwargs = task
+            self.new_task(func, *args, force=force, **kwargs)
 
     # def queue_in_size(self) -> int or NoReturn:
     #     try:

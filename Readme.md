@@ -1,5 +1,5 @@
 # Py-ShiftManager
-#### v0.1.3
+#### v0.1.4
 
 Py-ShiftManager is a Python module that provides a managed queue environment for handling IO and computational tasks, allowing you to easily manage concurrency and multiprocessing without worrying about the details.
 
@@ -29,6 +29,8 @@ It's that simple.
 * 🛠️ New method added - `configure()`; read more under *'API'* section.   
 * 🛠️ Improved concurrency and parallelism in the IO module.
 * ⌫ Deprecated methods - `queue_in_size()`, `queue_out_size()` 
+#### added in v0.1.4
+* 🛠️ Task submission now supports both *args and **kwargs. Read more under *API* section below.  
 
 ## Usage
 Here's an example of how to use Py-ShiftManager to handle IO tasks:  
@@ -121,8 +123,8 @@ This method sends a shut-down signal to all workers, they will stop gracefully.
 `ShiftManager_IO(num_of_workers: int = 1, daemon: bool = False, input_q_size: int = 10, output_q_size: int = 15) -> None`  
 Creates a new ShiftManager instance with the specified number of workers, daemon status, input queue size and output queue size.
 
-`new_task(func: Callable, task: Any, force: bool = False) -> None`  
-Adds a new task to the input queue; you could force it if you want.
+`new_task(func: Callable, *args, force: bool = False, **kwargs) -> None`  
+Adds a new task to the input queue; accepting *args and **kwargs; you could force it if you want.
 
 `new_batch(tasks: List[tuple], force: bool = False) -> None`  
 Adds a list of tasks to the input queue; you could force it if you want.
@@ -146,11 +148,11 @@ Allows the user to configure the following attributes by passing keyword argumen
 `ShiftManager_Compute(num_of_workers: int = 1, daemon: bool = False, input_q_size: int = 10, output_q_size: int = 15) -> None`  
 Creates a new ShiftManager instance with the specified number of workers, daemon status, input queue size and output queue size.
 
-`new_task(func: Callable, task: Any) -> None`  
-Adds a new task to the input queue.
+`new_task(func: Callable, *args, force: bool = False, **kwargs) -> None`  
+Adds a new task to the input queue; accepting *args and **kwargs; you could force it if you want.
 
-`new_batch(tasks: List[tuple]) -> None`  
-Adds a list of tasks to the input queue.
+`new_batch(tasks: List[tuple], force: bool = False) -> None`  
+Adds a list of tasks to the input queue; you could force it if you want.
 
 `handle_work() -> None`  
 Handles the tasks in the input queue.
@@ -169,4 +171,12 @@ Allows the user to configure the following attributes by passing keyword argumen
 
 **timeout_timer**  
 `@timeout_timer(seconds: int = 5)`  
-A decorator that attaches a timeout counter to your methods, use it to set a time limit to tasks in seconds; `5` seconds by default.
+A decorator that attaches a timeout counter to your methods, use it to set a time limit to tasks in seconds; `5` seconds by default.  
+
+**context_manager**
+implement it using the `with` keyword:  
+`with ShiftManager_Compute() as manager:`  
+`   manager.new_task(lambda x: x**2, 4)`  
+`   manager.new_task(lambda x: x**4, 13)`  
+then get the results:  
+`results = manager.get_results()`  

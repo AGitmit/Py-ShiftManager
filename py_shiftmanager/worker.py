@@ -47,8 +47,9 @@ class Worker_IO:
                 self.__is_working = True
                 func = dill.loads(task['func'])
                 args = task['args']
+                kwargs = task['kwargs']
                 try:
-                    result = func(*args)
+                    result = func(*args, **kwargs)
                 except Exception as err:
                     result = {"error": err, "task": func.__name__, "args": args}
                 qu_in.task_done()
@@ -91,7 +92,8 @@ class Worker_COM():
                 self.__is_working = True
                 func = dill.loads(task['func'])
                 args = task['args']
-                result = func(*args)
+                kwargs = task['kwargs']
+                result = func(*args, **kwargs)
                 qu_in.task_done()
                 try:
                     lock4.acquire()
