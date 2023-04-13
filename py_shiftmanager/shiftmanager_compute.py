@@ -1,8 +1,9 @@
 import multiprocessing
+import datetime
+import dill
 from typing import *
-
+import queue
 from .worker import Worker_COM, PoisonPill
-from .shiftmanager_io import ShiftManager_IO
 from .logger import Logger
 
 """
@@ -19,16 +20,17 @@ Read the 'Readme.md' file for more documentation and information.
 logger = Logger()
 
 
-class ShiftManager_Compute(ShiftManager_IO):
-    pool: multiprocessing.Pool
+class ShiftManager_Compute():
+    __pool: multiprocessing.Pool
 
-    def __init__(self, num_of_workers: int = multiprocessing.cpu_count(), daemon: bool = False, queue_size: int = 10) -> NoReturn:
-        super().__init__(num_of_workers, daemon)
-        self._q_in = multiprocessing.JoinableQueue(maxsize=queue_size)
-        self._q_out = multiprocessing.Queue(maxsize=int(queue_size * 1.5))
-        self.worker = Worker_COM()
-        self.workers = []
-        self._lock = multiprocessing.Lock()
+    def __init__(self, num_of_workers: int = multiprocessing.cpu_count(), daemon: bool = False, input_q_size: int = 10, output_q_size: int = 15) -> NoReturn:
+        self.__num_of_workers = num_of_workers
+        self.__daemon = daemon
+        self.__q_in = multiprocessing.JoinableQueue(maxsize=input_q_size)
+        self.__q_out = multiprocessing.Queue(maxsize=output_q_size)
+        self.__worker = Worker_COM()
+        self.__lock = multiprocessing.Lock()
+        self.__put_timeout = 1
         
     def __enter__(self, num_of_workers: int = multiprocessing.cpu_count(), daemon: bool = False, queue_size: int = 10):
         self.manager = ShiftManager_Compute(num_of_workers, daemon, queue_size)
@@ -41,81 +43,75 @@ class ShiftManager_Compute(ShiftManager_IO):
         self.manager.end_shift()
 
     def __repr__(self):
-        return f"""ShiftManagerCOM;daemonized={self.daemon};workers={self._num_of_workers}"""
+        return f"""ShiftManagerCOM;daemonized={self.__daemon};workers={self.__num_of_workers}"""
 
     """ Manual scaling of workers """
     def __add__(self, x: int) -> NoReturn:
-        super().__add__(x)
+        self.__num_of_workers += x
 
     def __sub__(self, x: int) -> NoReturn:
-        super().__sub__(x)
+        self.__num_of_workers -= x
 
     def __mul__(self, x: int) -> NoReturn:
-        super().__mul__(x)
+        self.__num_of_workers *= x
 
     def __divmod__(self, x: int) -> NoReturn:
-        super().__divmod__(x)
+        self.__num_of_workers /= x
 
+    def __submit_task(self, new_task, force: bool = False) -> NoReturn:
+        try:
+            if force:
+                self.__lock.acquire()
+                self.__q_in.put_nowait(new_task)
+            else:
+                self.__lock.acquire()
+                self.__q_in.put(new_task, timeout=self.__put_timeout)
+        except queue.Full:
+            logger.logger.error("INPUT-QUEUE IS FULL.")
+        finally:
+            self.__lock.release()
+            
+    def configure(self, **kwargs) -> NoReturn:
+        if kwargs['put_timeout']:
+            self.__put_timeout = kwargs['put_timeout']
+        if kwargs['num_of_workers']:
+            self.__num_of_workers = kwargs['num_of_workers']
+        if kwargs['daemon']:
+            self.__daemon = kwargs['daemon']
+            
     """ Task and queue management """
-    def new_task(self, func: Callable, *args) -> NoReturn:
-        super().new_task(func, *args)
+    def new_task(self, func: Callable, *args, force: bool = False) -> NoReturn:
+        new_task = {"arrival_time": int(datetime.datetime.now().timestamp()), "func": dill.dumps(func), "args": args}
+        self.__submit_task(new_task, force)
 
-    def new_batch(self, tasks: List[tuple]) -> NoReturn:
-        super().new_batch(tasks)
-
-    def queue_in_size(self) -> int or str:
-        return super().queue_in_size()
-
-    def queue_out_size(self) -> int or str:
-        return super().queue_out_size()
+    def new_batch(self, tasks: List[tuple], force: bool = False) -> NoReturn:
+        for task in tasks:
+            self.new_task(*task, force=force)
 
     def handle_work(self) -> NoReturn:
         """ start pool without close() to enable continuous acceptance of new submitted tasks """
-        self.pool = multiprocessing.Pool(processes=self._num_of_workers, initializer=self.worker.work,
-                                    initargs=(self._q_in, self._q_out))
+        self.__pool = multiprocessing.Pool(processes=self.__num_of_workers, initializer=self.__worker.work,
+                                    initargs=(self.__q_in, self.__q_out))
 
     def get_results(self) -> List:
-        results = super().get_results()
+        results = []
+        with self.__lock:
+            while not self.__q_out.empty():
+                results.append(self.__q_out.get())
         return results
 
     def end_shift(self) -> NoReturn:
         """ inject PoisonPill to input-queue and close() pool """
-        for _ in range(self._num_of_workers):
-            self._q_in.put(PoisonPill())
-        self.pool.close()
-        self.pool.join()
+        for _ in range(self.__num_of_workers):
+            self.__q_in.put(PoisonPill())
+        self.__pool.close()
+        self.__pool.join()
 
-    # def terminate(self) -> NoReturn:
-    #     """ send SIGTERM to pool workers """
-    #     self.pool.terminate()
-    #     self.flush_queue()
+    def __flush_queue(self) -> NoReturn:
+        while not self.__q_in.empty():
+            self.__q_in.get_nowait()
 
-    # def del_task(self, task: Any) -> NoReturn:
-    #     """
-    #     using .task_done() on completed_tasks to sync-up with main process.
-    #      """
-    #     with self._lock:
-    #         # Keep track of completed tasks
-    #         completed_tasks = multiprocessing.JoinableQueue()
-    #         i = 0  # using i since qsize() not implemented for multiprocessing.Queue()
-    #         while not self._q_in.empty():
-    #             current_item = self._q_in.get()
-    #             if current_item['task'] == task:
-    #                 continue
-    #             completed_tasks.put(current_item)
-    #             i += 1
-    #         # Mark all completed tasks as done
-    #         for _ in range(i):
-    #             completed_tasks.task_done()
-    #
-    #         while not completed_tasks.empty():
-    #             self._q_in.put(completed_tasks.get())
-
-    def flush_queue(self) -> NoReturn:
-        while not self._q_in.empty():
-            self._q_in.get_nowait()
-
-    def autoscale(self, arrival_rate: float, avg_queue_time: float, avg_service_time: float) -> NoReturn:
+    def __autoscale(self, arrival_rate: float, avg_queue_time: float, avg_service_time: float) -> NoReturn:
         """
         [!] Currently unavailable.
 
@@ -130,4 +126,4 @@ class ShiftManager_Compute(ShiftManager_IO):
         :return:
             No return.
         """
-        super().autoscale(arrival_rate, avg_queue_time, avg_service_time)
+        super().__autoscale(arrival_rate, avg_queue_time, avg_service_time)
