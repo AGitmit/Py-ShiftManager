@@ -15,29 +15,25 @@ logger = Logger()
 """ using thread locks to make queue interaction thread safe. 1 for in 1 for out. """
 lock1 = threading.Lock()
 lock2 = threading.Lock()
-lock3 = threading.Lock()
-lock4 = threading.Lock()
+lock3 = multiprocessing.Lock()
+lock4 = multiprocessing.Lock()
 
 
 class Worker_IO:
-    is_hired: bool
-    is_working: bool
-    role: str
-
     def __init__(self):
-        self.is_hired = True
-        self.is_working = False
-        self.role = "IO"
+        self.__is_hired = True
+        self.__is_working = False
+        self.__role = "IO"
 
     def __repr__(self):
-        return f"Worker;role={self.role};is_working={self.is_working};is_hired={self.is_hired}"
+        return f"Worker;role={self.__role};is_working={self.__is_working};is_hired={self.__is_hired}"
     
     def work(self, qu_in: queue.Queue, qu_out: multiprocessing.Queue) -> NoReturn:
-        self.is_hired = True
-        while self.is_hired:
+        self.__is_hired = True
+        while self.__is_hired:
             try:
                 lock1.acquire()
-                task = qu_in.get()
+                task = qu_in.get(timeout=1)
             except queue.Empty:
                 if lock1.locked():
                     lock1.release()
@@ -46,9 +42,9 @@ class Worker_IO:
                 lock1.release()
                 if task is None:
                     qu_in.task_done()
-                    self.is_hired = False
+                    self.__is_hired = False
                     break
-                self.is_working = True
+                self.__is_working = True
                 func = dill.loads(task['func'])
                 args = task['args']
                 try:
@@ -58,51 +54,50 @@ class Worker_IO:
                 qu_in.task_done()
                 try:
                     lock2.acquire()
-                    qu_out.put(result)
+                    qu_out.put(result, timeout=1)
                 except queue.Full:
                     logger.logger.error("OUTPUT-QUEUE IS FULL.")
                 finally:
                     if lock2.locked():
                         lock2.release()
-                    self.is_working = False
+                    self.__is_working = False
 
 
-class Worker_COM(Worker_IO):
+class Worker_COM():
+    __is_working: bool
+    
     def __init__(self):
-        super().__init__()
-        self.role = "COM"
+        self.__is_hired = True
+        self.__role = "COM"
 
     def __repr__(self):
-        super().__repr__()
+        return f"Worker;role={self.__role};is_working={self.__is_working};is_hired={self.__is_hired}"
 
     def work(self, qu_in: queue.Queue, qu_out: multiprocessing.Queue) -> NoReturn:
-        self.is_hired = True
-        while self.is_hired:
+        self.__is_hired = True
+        while self.__is_hired:
             try:
                 lock3.acquire()
-                task = qu_in.get(timeout=0.1)
+                task = qu_in.get(timeout=1)
             except queue.Empty:
-                if lock3.locked():
-                    lock3.release()
+                lock3.release()
                 continue
             else:
                 lock3.release()
                 if isinstance(task, PoisonPill):
-                    self.is_hired = False
+                    self.__is_hired = False
                     qu_in.task_done()
                     break
-                self.is_working = True
+                self.__is_working = True
                 func = dill.loads(task['func'])
                 args = task['args']
-                # insert timeout func here <<<<
                 result = func(*args)
                 qu_in.task_done()
                 try:
                     lock4.acquire()
-                    qu_out.put(result)
+                    qu_out.put(result, timeout=1)
+                    lock4.release()
                 except queue.Full:
+                    lock4.release()
                     logger.logger.error("OUTPUT-QUEUE IS FULL.")
-                finally:
-                    if lock4.locked():
-                        lock4.release()
-                self.is_working = False
+                self.__is_working = False
