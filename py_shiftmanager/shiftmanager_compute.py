@@ -84,11 +84,23 @@ class ShiftManager_Compute():
         new_task = {"arrival_time": int(datetime.datetime.now().timestamp()), "func": dill.dumps(func), "args": args, "kwargs": kwargs}
         self.__submit_task(new_task, force)
 
-    def new_batch(self, tasks: List[Tuple[Callable, Tuple, Dict[str, Any]]], force: bool = False) -> NoReturn:
+    def new_batch(self, tasks: List, force: bool = False) -> NoReturn:
         for task in tasks:
-            func, args, kwargs = task
+            if len(task) == 1:
+                func = task[0]
+                args = ()
+                kwargs = {}
+            elif len(task) == 2:
+                func, arg_or_kwarg = task
+                if isinstance(arg_or_kwarg, tuple):
+                    args = arg_or_kwarg
+                    kwargs = {}
+                else:
+                    args = ()
+                    kwargs = arg_or_kwarg
+            else:
+                func, args, kwargs = task
             self.new_task(func, *args, force=force, **kwargs)
-
 
     def handle_work(self) -> NoReturn:
         """ start pool without close() to enable continuous acceptance of new submitted tasks """

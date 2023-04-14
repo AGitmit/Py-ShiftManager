@@ -30,7 +30,7 @@ It's that simple.
 * 🛠️ Improved concurrency and parallelism in the IO module.
 * ⌫ Deprecated methods - `queue_in_size()`, `queue_out_size()` 
 #### added in v0.1.4
-* 🛠️ Task submission now supports both *args and **kwargs. Read more under *API* section below.  
+* 🛠️ Task submission now supports both *args and **kwargs. 
 
 ## Usage
 Here's an example of how to use Py-ShiftManager to handle IO tasks:  
