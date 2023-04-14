@@ -61,7 +61,7 @@ We can assign single tasks to the queue:
 Or we can submit a batch by passing a list of tuples:  
 `tasks = [(get_status, "http://www.google.com"),(get_status, "http://www.facebook.com")]`  
 `manager.new_batch(tasks)`  
-  
+
 **Note**: you can also pass in *lambda* functions.
 
 # Handle the tasks
