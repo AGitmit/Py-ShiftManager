@@ -87,21 +87,29 @@ class ShiftManager_IO:
 
     def new_batch(self, tasks: List, force: bool = False) -> NoReturn:
         for task in tasks:
-            if len(task) == 1:
-                func = task[0]
+            try:
+                if len(task) == 1:
+                    func = task[0]
+                    args = ()
+                    kwargs = {}
+                elif len(task) == 2:
+                    func, arg_or_kwarg = task
+                    if isinstance(arg_or_kwarg, tuple or str or int or list):
+                        args = arg_or_kwarg
+                        kwargs = {}
+                    elif isinstance(arg_or_kwarg, dict):
+                        args = ()
+                        kwargs = arg_or_kwarg
+                    else:
+                        raise TypeError("invalid argument type in task batch.")
+                elif len(task) == 3:
+                    func, args, kwargs = task
+            except TypeError:
+                func = task
                 args = ()
                 kwargs = {}
-            elif len(task) == 2:
-                func, arg_or_kwarg = task
-                if isinstance(arg_or_kwarg, tuple):
-                    args = arg_or_kwarg
-                    kwargs = {}
-                else:
-                    args = ()
-                    kwargs = arg_or_kwarg
-            else:
-                func, args, kwargs = task
-            self.new_task(func, *args, force=force, **kwargs)
+            finally:
+                self.new_task(func, *args, force=force, **kwargs)
 
     # def queue_in_size(self) -> int or NoReturn:
     #     try:

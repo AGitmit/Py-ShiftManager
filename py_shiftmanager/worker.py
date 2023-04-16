@@ -51,7 +51,7 @@ class Worker_IO:
                 try:
                     result = func(*args, **kwargs)
                 except Exception as err:
-                    result = {"error": err, "task": func.__name__, "args": args}
+                    result = {"error": err, "task": func.__name__, "args": args, "kwargs": kwargs}
                 qu_in.task_done()
                 try:
                     lock2.acquire()
@@ -93,7 +93,10 @@ class Worker_COM():
                 func = dill.loads(task['func'])
                 args = task['args']
                 kwargs = task['kwargs']
-                result = func(*args, **kwargs)
+                try:
+                    result = func(*args, **kwargs)
+                except Exception as err:
+                    result = {"error": err, "task": func.__name__, "args": args, "kwargs": kwargs}
                 qu_in.task_done()
                 try:
                     lock4.acquire()

@@ -171,7 +171,7 @@ Allows the user to configure the following attributes by passing keyword argumen
 
 **timeout_timer**  
 `@timeout_timer(seconds: int = 5)`  
-A decorator that attaches a timeout counter to your methods, use it to set a time limit to tasks in seconds; `5` seconds by default.  
+A decorator that attaches a timeout counter to your methods, use it to set a time limit to tasks in seconds; `seconds=5` by default.  
 
 **context_manager**
 implement it using the `with` keyword:  
