@@ -5,7 +5,7 @@ def timeout_timer(seconds=5, func=None, error_message='Task timed out.'):
         Setting the thread daemon flag to True, so that it exits when the time runs out and program ended.
     """
     if func is None:
-        return lambda f: timeout_timer(f, seconds, error_message)
+        return lambda f: timeout_timer(seconds, f, error_message)
 
     def wrapper(*args, **kwargs):
         result = {"task": func.__name__, "args": args, "kwargs": kwargs}
