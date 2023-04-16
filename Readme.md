@@ -1,5 +1,5 @@
 # Py-ShiftManager
-#### v0.1.4
+#### v0.1.6
 
 Py-ShiftManager is a Python module that provides a managed queue environment for handling IO and computational tasks, allowing you to easily manage concurrency and multiprocessing without worrying about the details.
 
@@ -29,7 +29,7 @@ It's that simple.
 * 🛠️ New method added - `configure()`; read more under *'API'* section.   
 * 🛠️ Improved concurrency and parallelism in the IO module.
 * ⌫ Deprecated methods - `queue_in_size()`, `queue_out_size()` 
-#### added in v0.1.4
+#### added in v0.1.6
 * 🛠️ Task submission now supports both *args and **kwargs. 
 
 ## Usage
@@ -57,9 +57,9 @@ Assume we have created a function called 'get_status()' that uses *requests* and
 We can assign single tasks to the queue:  
 `manager.new_task(get_status, "http://www.google.com")`  
 `manager.new_task(get_status, "http://www.facebook.com")`  
-`manager.new_task(get_status, "http://www.twitter.com")`   
+`manager.new_task(get_status, url="http://www.twitter.com")`   
 Or we can submit a batch by passing a list of tuples:  
-`tasks = [(get_status, ("http://www.google.com",)),(get_status, ("http://www.facebook.com",))]`  
+`tasks = [(get_status, ("http://www.google.com",)),(get_status, {"url": "http://www.facebook.com"})]`  
 `manager.new_batch(tasks)`  
 
 **Note**: you can also pass in *lambda* functions. Also make sure that with using new_batch() you pass arguments in a nested tuple.
