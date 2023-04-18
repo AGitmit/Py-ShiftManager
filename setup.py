@@ -6,6 +6,7 @@ from pathlib import Path
 setup(
     name='py_shiftmanager',
     version='0.1.6',
+    author='Amit Nakash',
     description='A simplified, all-in-one shop for handling multithreading/multiprocessing using a managed queue system.',
     # long_description=long_description,
     packages=find_packages(),
